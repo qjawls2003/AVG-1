@@ -1,80 +1,143 @@
-#define trigPin1 9
-#define echoPin1 8
-#define LED_first_ping 22
 
-#define trigPin2 10
-#define echoPin2 11
-#define LED_second_ping 24
+#include <Servo.h> 
+ 
+Servo rightServo;  // create servo object to control a servo 
+Servo leftServo;                // twelve servo objects can be created on most boards
+int i = 0;      // loop counter
+const int dur = 2;
+const int pingPin1 = 8;
+const int pingPin2 = 7;
 
-long duration, distance, UltraSensor1, UltraSensor2;
-char data;
-String SerialData="";
+
 
 void setup()
 {
 Serial.begin(9600);
-pinMode(trigPin1,OUTPUT);
-pinMode(echoPin1,INPUT);
-pinMode(LED_first_ping, OUTPUT);
-pinMode(trigPin2,OUTPUT);
-pinMode(echoPin2,INPUT);
-pinMode(LED_second_ping, OUTPUT);
-digitalWrite(LED_first_ping,LOW);
-digitalWrite(LED_second_ping,LOW);
+  rightServo.attach(10);   // attaches the servo on pin 10 to the servo object 
+  leftServo.attach(11);
+  //This is one of the servo ports on the Parallax shield. Others are 11, 12, and 13
+  
+  for (i = 0; i < dur; i++ ){ 
+    rightServo.writeMicroseconds(1500);    // motor stop 
+    leftServo.writeMicroseconds(1500);    // motor stop 
+    delay(15); 
+  }
+  
+  for (i = 0; i< dur; i++){
+     rightServo.writeMicroseconds(1000);     // full speed in one direction
+     leftServo.writeMicroseconds(1000);
+     delay(15);  
+  } 
+  
+  for (i = 0; i< dur; i++){
+    rightServo.writeMicroseconds(2000);   // full speed in the other direction
+    leftServo.writeMicroseconds(2000);
+    delay(15);
+  }  
+  
+  for (i = 0; i < dur; i++ ){ 
+  rightServo.writeMicroseconds(1500);    // motor stop 
+  leftServo.writeMicroseconds(1500);
+  delay(15); 
+  }
+
+  //forward(120);
+  //motorStop(20);
+  //turnRight(20);
+  //motorStop(20);
+  //turnLeft(20);
+  
+  //motorStop(1);
+  
 }
+
 void loop()
 {
-SonarSensor(trigPin1,echoPin1);
-UltraSensor1=distance;
-SonarSensor(trigPin2,echoPin2);
-UltraSensor2=distance;
-
-while(Serial.available())
-{
-  delay(10);
-  data=Serial.read();
-  SerialData+=data;
-}
-
-if(SerialData=="display distance")
-{
-Serial.println("distance measured by the first sensor: ");
-Serial.print(UltraSensor1);
-Serial.print(" cm");
-Serial.println("distance measured by the second sensor: ");
-Serial.print(UltraSensor2);
-Serial.print(" cm");
-}
-
-SerialData="";
-if(UltraSensor1 <=10)
-{
-  digitalWrite(LED_first_ping,HIGH);
-}
-else
-{
-  digitalWrite(LED_first_ping,LOW);
-}
-
-if(UltraSensor2 <=10)
-{
-  digitalWrite(LED_first_ping,HIGH);
-}
-else
-{
-  digitalWrite(LED_first_ping,LOW);
-}
-}
-
-void SonarSensor(int trigPinSensor, int echoPinSensor)
-{
-digitalWrite(trigPinSensor,LOW);
+long duration1, duration2, cm1, cm2;
+pinMode(pingPin1,OUTPUT);
+digitalWrite(pingPin1,LOW);
 delayMicroseconds(2);
-digitalWrite(trigPinSensor,HIGH);
-delayMicroseconds(10);
-digitalWrite(trigPinSensor,LOW);
+digitalWrite(pingPin1,HIGH);
+delayMicroseconds(5);
+digitalWrite(pingPin1,LOW);
+pinMode(pingPin1,INPUT);
+duration1= pulseIn(pingPin1,HIGH);
 
-duration=pulseIn(echoPinSensor,HIGH);
-distance=(duration/2)/29.1;
+
+pinMode(pingPin2,OUTPUT);
+digitalWrite(pingPin2,LOW);
+delayMicroseconds(2);
+digitalWrite(pingPin2,HIGH);
+delayMicroseconds(5);
+digitalWrite(pingPin2,LOW);
+pinMode(pingPin2,INPUT);
+duration2= pulseIn(pingPin2,HIGH);
+
+
+cm1=microsecondsToCentimeters(duration1);
+cm2=microsecondsToCentimeters(duration2);
+Serial.print(cm1);
+Serial.print(" cm ");
+Serial.print(cm2);
+Serial.print(" cm ");
+Serial.println();
+delay(100);
+
+if (cm2>60){
+  forward(20);
+}
+else {
+  motorStop(20);
+}
+
+if (cm1<60 and cm2<60){
+    turnLeft(10);
+  }
+
+
+}
+
+void turnRight(int len){
+  for (i = 0; i< dur*len; i++){
+     rightServo.writeMicroseconds(1250);     // Clockwise 45 degrees 
+     leftServo.writeMicroseconds(1750);
+     delay(15);  
+  }
+}
+
+void turnLeft(int len){
+  for (i = 0; i< dur*len; i++){
+     rightServo.writeMicroseconds(1750);     // counterclockwise 45 degrees
+     leftServo.writeMicroseconds(1250);
+     delay(15);  
+  }
+}
+
+void motorStop(int len){
+  for (i = 0; i < dur*len; i++ ){ 
+    rightServo.writeMicroseconds(1500);    // motor stop 
+    leftServo.writeMicroseconds(1500);
+  delay(15); 
+  }
+}
+  
+void forward(int len){
+  for (i = 0; i < dur*len; i++ ){ 
+    rightServo.writeMicroseconds(1650);    // motor stop 
+    leftServo.writeMicroseconds(1650);
+  delay(15); 
+  }
+}
+
+void reverse(int len){
+  for (i = 0; i < dur*len; i++ ){ 
+    rightServo.writeMicroseconds(1250);    // motor stop 
+    leftServo.writeMicroseconds(1250);
+  delay(15); 
+  }
+}
+
+long microsecondsToCentimeters(long microseconds) {
+  return microseconds / 29 / 2;
 }
 
